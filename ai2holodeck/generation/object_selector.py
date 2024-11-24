@@ -19,6 +19,8 @@ from ai2holodeck.generation.objaverse_retriever import ObjathorRetriever
 from ai2holodeck.generation.utils import get_bbox_dims, get_annotations
 from ai2holodeck.generation.wall_objects import DFS_Solver_Wall
 
+from tqdm import tqdm
+
 EXPECTED_OBJECT_ATTRIBUTES = [
     "description",
     "location",
@@ -60,7 +62,7 @@ class ObjectSelector:
 
         self.random_selection = False
         self.reuse_selection = False
-        self.multiprocessing = True
+        self.multiprocessing = False
 
     def select_objects(self, scene, additional_requirements="N/A"):
         rooms_types = [room["roomType"] for room in scene["rooms"]]
@@ -123,13 +125,17 @@ class ObjectSelector:
                 for room_type in rooms_types
             ]
 
-            if self.multiprocessing:
-                pool = multiprocessing.Pool(processes=4)
-                results = pool.map(self.plan_room, packed_args)
-                pool.close()
-                pool.join()
-            else:
-                results = [self.plan_room(args) for args in packed_args]
+            # if self.multiprocessing:
+            #     pool = multiprocessing.Pool(processes=4)
+            #     results = pool.map(self.plan_room, packed_args)
+            #     pool.close()
+            #     pool.join()
+            # else:
+            # results = [self.plan_room(args) for args in packed_args]
+            results = []
+            from tqdm import tqdm
+            for args in tqdm(packed_args):
+                results.append(self.plan_room(args))
 
             for room_type, result in results:
                 selected_objects[room_type]["floor"] = result["floor"]
@@ -406,7 +412,7 @@ class ObjectSelector:
         self, floor_object_list, floor_capacity, room_size, room_vertices, scene
     ):
         selected_floor_objects_all = []
-        for floor_object in floor_object_list:
+        for floor_object in tqdm(floor_object_list, desc="Selecting floor objects"):
             object_type = floor_object["object_name"]
             object_description = floor_object["description"]
             object_size = floor_object["size"]
@@ -551,7 +557,7 @@ class ObjectSelector:
         self, wall_object_list, wall_capacity, room_size, room_vertices, scene
     ):
         selected_wall_objects_all = []
-        for wall_object in wall_object_list:
+        for wall_object in tqdm(wall_object_list, desc="Selecting wall objects"):
             object_type = wall_object["object_name"]
             object_description = wall_object["description"]
             object_size = wall_object["size"]
