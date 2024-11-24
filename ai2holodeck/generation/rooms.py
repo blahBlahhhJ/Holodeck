@@ -35,7 +35,7 @@ class FloorPlanGenerator:
             clip_model, clip_process, clip_tokenizer
         )
         self.floor_plan_template = PromptTemplate(
-            input_variables=["input", "additional_requirements"],
+            input_variables=["input", "current_design", "additional_requirements"],
             template=prompts.floor_plan_prompt,
         )
         self.llm = llm
