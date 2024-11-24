@@ -1,4 +1,4 @@
-floor_plan_prompt = """You are an experienced room designer. Please assist me in crafting a floor plan. Each room is a rectangle. You need to define the four coordinates and specify an appropriate design scheme, including each room's color, material, and texture.
+floor_plan_prompt = """You are an experienced room designer. Please assist me in crafting or refining a floor plan. Each room is a rectangle. You need to define the four coordinates and specify an appropriate design scheme, including each room's color, material, and texture.
 Assume the wall thickness is zero. Please ensure that all rooms are connected, not overlapped, and do not contain each other.
 Note: the units for the coordinates are meters.
 For example:
@@ -11,7 +11,10 @@ Here are some guidelines for you:
 3. The room name should be unique.
 
 Now, I need a design for {input}.
+Current design: 
+{current_design}
 Additional requirements: {additional_requirements}.
+
 Your response should be direct and without additional text at the beginning or end."""
 
 

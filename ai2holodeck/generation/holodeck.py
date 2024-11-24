@@ -153,7 +153,7 @@ class Holodeck:
 
     def generate_rooms(self, scene, additional_requirements_room, used_assets=[]):
         self.floor_generator.used_assets = used_assets
-        rooms = self.floor_generator.generate_rooms(scene, additional_requirements_room)
+        rooms = self.floor_generator.generate_rooms(scene, additional_requirements_room, visualize=True)
         scene["rooms"] = rooms
         return scene
 
