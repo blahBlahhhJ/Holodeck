@@ -64,6 +64,8 @@ class FloorPlanGenerator:
 
             if additional_requirements == "DONE":
                 break
+            else:
+                scene.pop('raw_floor_plan')
 
         return rooms
 
