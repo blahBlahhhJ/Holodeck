@@ -158,16 +158,23 @@ class Holodeck:
             rooms = self.floor_generator.generate_rooms(scene, additional_requirements_room)
             scene["rooms"] = rooms
 
+            wall_height, walls = self.wall_generator.generate_walls(scene)
+            scene["wall_height"] = wall_height
+            scene["walls"] = walls
+
+            # generate walls
+            scene = self.generate_walls(scene)
+
             compress_json.dump(
                 scene,
                 os.path.join(self.save_dir, "tmp_rooms.json"),
                 json_kwargs=dict(indent=4),
             )
 
-            print(f"{Fore.GREEN}AI: Use {os.path.join(self.save_dir, "tmp_rooms.json")} to render the current design. If you are happy with the design, please type DONE. Otherwise, type in additional requirements to edit the current design.{Fore.RESET}")
-            additional_requirements = input("User: ")
+            print(f"{Fore.GREEN}AI: Use {os.path.join(self.save_dir, 'tmp_rooms.json')} to render the current design. If you are happy with the design, please type DONE. Otherwise, type in additional requirements to edit the current design.{Fore.RESET}")
+            additional_requirements_room = input("User: ")
 
-            if additional_requirements == "DONE":
+            if additional_requirements_room == "DONE":
                 break
             else:
                 scene.pop('raw_floor_plan')
@@ -301,9 +308,6 @@ class Holodeck:
             additional_requirements_room=self.additional_requirements_room,
             used_assets=used_assets,
         )
-
-        # generate walls
-        scene = self.generate_walls(scene)
 
         # generate doors
         scene = self.generate_doors(
