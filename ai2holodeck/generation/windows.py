@@ -38,6 +38,7 @@ class WindowGenerator:
                 "input",
                 "walls",
                 "wall_height",
+                "previous_design",
                 "additional_requirements",
             ],
             template=prompts.window_prompt,

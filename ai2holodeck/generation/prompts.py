@@ -280,6 +280,10 @@ For example:
 }
 
 Currently, the design in progress is *INPUT*, and we are working on the *ROOM_TYPE* with the size of ROOM_SIZE.
+
+Previous selections:
+PREVIOUS_SELECTIONS
+
 Please also consider the following additional requirements: REQUIREMENTS.
 
 Here are some guidelines for you:
