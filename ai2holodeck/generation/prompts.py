@@ -124,7 +124,23 @@ Here are some guidelines for you:
 Now I want you to design {room_type} and the room size is {room_size}.
 Here are the objects that I want to place in the {room_type}:
 {objects}
+
+Previous constraints:
+{previous_constraints}
+
 Please first use natural language to explain your high-level design strategy, and then follow the desired format *strictly* (do not add any additional text at the beginning or end) to provide the constraints for each object."""
+
+
+object_constraints_prompt_2 = """User: {object_constraints_prompt_1}
+
+Agent: {object_constraints_1}
+
+User: Thanks! Given the new set of constraints and the old ones, assist me in deciding which of the objects should approximately remain in the same place from the previous design.
+Present your recommendations in this format: object 1 | object 2 | object 3 | ...
+For example:
+bed-1 | sofa-0 | lamp-0
+
+Agent: """
 
 
 wall_object_selection_prompt = """Assist me in selecting wall-based objects to furnish each room.

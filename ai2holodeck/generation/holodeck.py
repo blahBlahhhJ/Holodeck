@@ -267,6 +267,7 @@ class Holodeck:
     def select_objects(self, scene, additional_requirements_object, used_assets=[], use_milp=False, use_constraint=True):
         self.object_selector.used_assets = used_assets
 
+        editing = False
         while True:
             object_selection_plan, selected_objects = self.object_selector.select_objects(
                 scene, additional_requirements_object
@@ -277,7 +278,7 @@ class Holodeck:
             # generate floor objects
             self.floor_object_generator.use_milp = use_milp
             scene["floor_objects"] = self.floor_object_generator.generate_objects(
-                scene, use_constraint=use_constraint
+                scene, use_constraint=use_constraint, editing=editing,
             )
 
             # generate wall objects
@@ -296,6 +297,7 @@ class Holodeck:
 
             if additional_requirements_object == "DONE":
                 break
+            editing = True
 
         return scene
 
