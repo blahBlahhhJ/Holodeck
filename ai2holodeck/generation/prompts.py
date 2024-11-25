@@ -11,8 +11,10 @@ Here are some guidelines for you:
 3. The room name should be unique.
 
 Now, I need a design for {input}.
+
 Current design: 
 {current_design}
+
 Additional requirements: {additional_requirements}.
 
 Your response should be direct and without additional text at the beginning or end."""

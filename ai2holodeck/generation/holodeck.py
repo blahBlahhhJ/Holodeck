@@ -3,6 +3,7 @@ import os
 from typing import Optional, Dict, Any, Tuple
 
 import compress_json
+from colorama import Fore
 import open_clip
 from langchain.llms import OpenAI
 from sentence_transformers import SentenceTransformer
@@ -153,8 +154,24 @@ class Holodeck:
 
     def generate_rooms(self, scene, additional_requirements_room, used_assets=[]):
         self.floor_generator.used_assets = used_assets
-        rooms = self.floor_generator.generate_rooms(scene, additional_requirements_room, visualize=True)
-        scene["rooms"] = rooms
+        while True:
+            rooms = self.floor_generator.generate_rooms(scene, additional_requirements_room)
+            scene["rooms"] = rooms
+
+            compress_json.dump(
+                scene,
+                os.path.join(self.save_dir, "tmp_rooms.json"),
+                json_kwargs=dict(indent=4),
+            )
+
+            print(f"{Fore.GREEN}AI: Use {os.path.join(self.save_dir, "tmp_rooms.json")} to render the current design. If you are happy with the design, please type DONE. Otherwise, type in additional requirements to edit the current design.{Fore.RESET}")
+            additional_requirements = input("User: ")
+
+            if additional_requirements == "DONE":
+                break
+            else:
+                scene.pop('raw_floor_plan')
+
         return scene
 
     def generate_walls(self, scene):
@@ -270,6 +287,7 @@ class Holodeck:
         random_selection=False,
         use_milp=False,
     ) -> Tuple[Dict[str, Any], str]:
+        self.save_dir = save_dir
         # initialize scene
         query = query.replace("_", " ")
         scene["query"] = query

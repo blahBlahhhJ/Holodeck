@@ -41,32 +41,20 @@ class FloorPlanGenerator:
         self.llm = llm
         self.used_assets = []
 
-    def generate_rooms(self, scene, additional_requirements="N/A", current_design="N/A", visualize=False):
-        while True:
-            # get floor plan if not provided
-            floor_plan_prompt = self.floor_plan_template.format(
-                input=scene["query"], current_design=current_design, additional_requirements=additional_requirements
-            )
-            if "raw_floor_plan" not in scene:
-                raw_floor_plan = self.llm(floor_plan_prompt)
-                scene["raw_floor_plan"] = raw_floor_plan
-            else:
-                raw_floor_plan = scene["raw_floor_plan"]
+    def generate_rooms(self, scene, additional_requirements="N/A", visualize=False):
+        current_design = scene.get("raw_floor_plan", "N/A")
 
-            print(f"User: {floor_plan_prompt}\n")
-            print(f"{Fore.GREEN}AI: Here is the floor plan:\n{raw_floor_plan}{Fore.RESET}")
+        # get floor plan if not provided
+        floor_plan_prompt = self.floor_plan_template.format(
+            input=scene["query"], current_design=current_design, additional_requirements=additional_requirements
+        )
+        raw_floor_plan = self.llm(floor_plan_prompt)
+        scene["raw_floor_plan"] = raw_floor_plan
 
-            rooms = self.get_plan(scene["query"], scene["raw_floor_plan"], visualize)
-        
-            print(f"{Fore.GREEN}AI: If you are happy with the design, please type DONE. Otherwise, type in additional requirements to edit the current design.{Fore.RESET}")
-            current_design = raw_floor_plan
-            additional_requirements = input("User: ")
+        print(f"User: {floor_plan_prompt}\n")
+        print(f"{Fore.GREEN}AI: Here is the floor plan:\n{raw_floor_plan}{Fore.RESET}")
 
-            if additional_requirements == "DONE":
-                break
-            else:
-                scene.pop('raw_floor_plan')
-
+        rooms = self.get_plan(scene["query"], scene["raw_floor_plan"], visualize)
         return rooms
 
     def get_plan(self, query, raw_plan, visualize=False):
