@@ -1,3 +1,4 @@
+import copy
 import datetime
 import os
 from typing import Optional, Dict, Any, Tuple
@@ -176,8 +177,6 @@ class Holodeck:
 
             if additional_requirements_room == "DONE":
                 break
-            else:
-                scene.pop('raw_floor_plan')
 
         return scene
 
@@ -190,24 +189,41 @@ class Holodeck:
     def generate_doors(self, scene, additional_requirements_door="N/A", used_assets=[]):
         self.door_generator.used_assets = used_assets
 
-        # generate doors
-        (
-            raw_doorway_plan,
-            doors,
-            room_pairs,
-            open_room_pairs,
-        ) = self.door_generator.generate_doors(scene, additional_requirements_door)
-        scene["raw_doorway_plan"] = raw_doorway_plan
-        scene["doors"] = doors
-        scene["room_pairs"] = room_pairs
-        scene["open_room_pairs"] = open_room_pairs
+        while True:
+            # generate doors
+            (
+                raw_doorway_plan,
+                doors,
+                room_pairs,
+                open_room_pairs,
+            ) = self.door_generator.generate_doors(scene, additional_requirements_door)
+            scene["raw_doorway_plan"] = raw_doorway_plan
 
-        # update walls
-        updated_walls, open_walls = self.wall_generator.update_walls(
-            scene["walls"], open_room_pairs
-        )
-        scene["walls"] = updated_walls
-        scene["open_walls"] = open_walls
+            new_scene = copy.deepcopy(scene)
+            new_scene["doors"] = doors
+            new_scene["room_pairs"] = room_pairs
+            new_scene["open_room_pairs"] = open_room_pairs
+
+            # update walls
+            updated_walls, open_walls = self.wall_generator.update_walls(
+                new_scene["walls"], open_room_pairs
+            )
+            new_scene["walls"] = updated_walls
+            new_scene["open_walls"] = open_walls
+
+            compress_json.dump(
+                new_scene,
+                os.path.join(self.save_dir, "tmp_doors.json"),
+                json_kwargs=dict(indent=4),
+            )
+
+            print(f"{Fore.GREEN}AI: Use {os.path.join(self.save_dir, 'tmp_doors.json')} to render the current design. If you are happy with the design, please type DONE. Otherwise, type in additional requirements to edit the current design.{Fore.RESET}")
+            additional_requirements_door = input("User: ")
+
+            if additional_requirements_door == "DONE":
+                break
+
+        scene = new_scene
         return scene
 
     def generate_windows(

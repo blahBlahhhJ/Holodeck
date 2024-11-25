@@ -48,6 +48,7 @@ class DoorGenerator:
                 "rooms",
                 "room_sizes",
                 "room_pairs",
+                "previous_design",
                 "additional_requirements",
             ],
             template=prompts.doorway_prompt,
@@ -80,6 +81,7 @@ class DoorGenerator:
             )
 
     def generate_doors(self, scene, additional_requirements_door):
+        previous_design = scene.get("raw_doorway_plan", "N/A")
         # get room pairs
         room_types = [room["roomType"] for room in scene["rooms"]]
         room_types_str = str(room_types).replace("'", "")[1:-1]
@@ -92,14 +94,11 @@ class DoorGenerator:
             rooms=room_types_str,
             room_sizes=room_sizes_str,
             room_pairs=room_pairs_str,
+            previous_design=previous_design,
             additional_requirements=additional_requirements_door,
         )
 
-        # generate raw doorway plan if not exist
-        if "raw_doorway_plan" not in scene:
-            raw_doorway_plan = self.llm(doorway_prompt)
-        else:
-            raw_doorway_plan = scene["raw_doorway_plan"]
+        raw_doorway_plan = self.llm(doorway_prompt)
 
         print(f"\nUser: {doorway_prompt}\n")
         print(

@@ -12,8 +12,8 @@ Here are some guidelines for you:
 
 Now, I need a design for {input}.
 
-Current design: 
-{current_design}
+Previous design: 
+{previous_design}
 
 Additional requirements: {additional_requirements}.
 
@@ -33,6 +33,10 @@ living room | bedroom | doorway | single | wooden door with white frames
 
 The design under consideration is {input}, which includes these rooms: {rooms}. The length, width and height of each room in meters are:
 {room_sizes}
+
+Previous design: 
+{previous_design}
+
 Certain pairs of rooms share a wall: {room_pairs}. There must be a door to the exterior.
 Adhere to these additional requirements: {additional_requirements}.
 Provide your response succinctly, without additional text at the beginning or end."""
