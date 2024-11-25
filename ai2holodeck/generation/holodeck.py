@@ -233,12 +233,27 @@ class Holodeck:
         used_assets=[],
     ):
         self.window_generator.used_assets = used_assets
-        raw_window_plan, walls, windows = self.window_generator.generate_windows(
-            scene, additional_requirements_window
-        )
-        scene["raw_window_plan"] = raw_window_plan
-        scene["windows"] = windows
-        scene["walls"] = walls
+
+        while True:
+            raw_window_plan, walls, windows = self.window_generator.generate_windows(
+                scene, additional_requirements_window
+            )
+            scene["raw_window_plan"] = raw_window_plan
+            scene["windows"] = windows
+            scene["walls"] = walls
+
+            compress_json.dump(
+                scene,
+                os.path.join(self.save_dir, "tmp_windows.json"),
+                json_kwargs=dict(indent=4),
+            )
+
+            print(f"{Fore.GREEN}AI: Use {os.path.join(self.save_dir, 'tmp_windows.json')} to render the current design. If you are happy with the design, please type DONE. Otherwise, type in additional requirements to edit the current design.{Fore.RESET}")
+            additional_requirements_window = input("User: ")
+
+            if additional_requirements_window == "DONE":
+                break
+
         return scene
 
     def select_objects(self, scene, additional_requirements_object, used_assets=[]):

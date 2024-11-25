@@ -45,19 +45,18 @@ class WindowGenerator:
         self.used_assets = []
 
     def generate_windows(self, scene, additional_requirements_window):
+        previous_design = scene.get("raw_window_plan", "N/A")
         # get organized walls
         organized_walls, available_wall_str = self.get_wall_for_windows(scene)
         window_prompt = self.window_template.format(
             input=scene["query"],
             walls=available_wall_str,
             wall_height=int(scene["wall_height"] * 100),
+            previous_design=previous_design,
             additional_requirements=additional_requirements_window,
         )
 
-        if "raw_window_plan" not in scene:
-            raw_window_plan = self.llm(window_prompt)
-        else:
-            raw_window_plan = scene["raw_window_plan"]
+        raw_window_plan = self.llm(window_prompt)
 
         print(f"\nUser: {window_prompt}\n")
         print(

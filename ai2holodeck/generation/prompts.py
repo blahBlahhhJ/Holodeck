@@ -34,10 +34,11 @@ living room | bedroom | doorway | single | wooden door with white frames
 The design under consideration is {input}, which includes these rooms: {rooms}. The length, width and height of each room in meters are:
 {room_sizes}
 
+Certain pairs of rooms share a wall: {room_pairs}. There must be a door to the exterior.
+
 Previous design: 
 {previous_design}
 
-Certain pairs of rooms share a wall: {room_pairs}. There must be a door to the exterior.
 Adhere to these additional requirements: {additional_requirements}.
 Provide your response succinctly, without additional text at the beginning or end."""
 
@@ -56,6 +57,10 @@ living room | west | fixed | (130, 130) | 1 | 50
 I am now designing {input}. The wall height is {wall_height} cm. The walls available for window installation (direction, width in cm) in each room are:
 {walls}
 Please note: It is not mandatory to install windows on every available wall. Within the same room, all windows must be the same type and size.
+
+Previous design: 
+{previous_design}
+
 Also, adhere to these additional requirements: {additional_requirements}.
 
 Provide a concise response, omitting any additional text at the beginning or end. """
