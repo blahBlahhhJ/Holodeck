@@ -15,6 +15,10 @@ from rtree import index
 from scipy.interpolate import interp1d
 from shapely.geometry import Polygon, Point, box, LineString
 
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
 import ai2holodeck.generation.prompts as prompts
 from ai2holodeck.generation.milp_utils import *
 from ai2holodeck.generation.objaverse_retriever import ObjathorRetriever
@@ -475,6 +479,7 @@ class DFS_Solver_Floor:
             "direction": self.place_face,
             "alignment": self.place_alignment_center,
             "distance": self.place_distance,
+            "anchor": self.place_anchor,
         }
 
         self.constraint_type2weight = {
@@ -483,6 +488,7 @@ class DFS_Solver_Floor:
             "direction": 0.5,
             "alignment": 0.5,
             "distance": 1.8,
+            "anchor": 10.,
         }
 
         self.edge_bouns = 0.0  # worth more than one constraint
@@ -654,14 +660,20 @@ class DFS_Solver_Floor:
                 continue
 
             func = self.func_dict.get(constraint["type"])
-            valid_solutions = func(
-                constraint["constraint"],
-                placed_objects[constraint["target"]],
-                candidate_solutions,
-            )
+            if constraint["type"] == "anchor":
+                valid_solutions = func(
+                    constraint["target"],
+                    candidate_solutions,
+                )
+            else:
+                valid_solutions = func(
+                    constraint["constraint"],
+                    placed_objects[constraint["target"]],
+                    candidate_solutions,
+                )
 
             weight = self.constraint_type2weight[constraint["type"]]
-            if constraint["type"] == "distance":
+            if constraint["type"] == "distance" or "anchor":
                 for solution in valid_solutions:
                     bouns = solution[-1]
                     placement2score[tuple(solution[:3])] += bouns * weight
@@ -970,7 +982,38 @@ class DFS_Solver_Floor:
                 valid_solutions.append(solution)
 
         return valid_solutions
+    
+    def place_anchor(self, target_point, solutions):
+        """ 
+        target_coords: numpy array of (2,)
+        """
+        distances = []
+        valid_solutions = []
+        for solution in solutions:
+            solution_point = np.array(solution[0])
+            distance = np.linalg.norm(solution_point - target_point)
+            distances.append(distance)
+            
+            solution[-1] = distance
+            valid_solutions.append(solution)
+            
+        min_distance = min(distances)
+        max_distance = max(distances)
+        if min_distance < 80:
+            points = [(min_distance, 1), (80, 0), (max_distance, 0)]
+        else:
+            points = [(min_distance, 0), (max_distance, 0)]
+        x = [point[0] for point in points]
+        y = [point[1] for point in points]
 
+        f = interp1d(x, y, kind="linear", fill_value="extrapolate")
+        
+        for solution in valid_solutions:
+            distance = solution[-1]
+            solution[-1] = float(f(distance))
+
+        return valid_solutions
+    
     def place_distance(self, distance_type, target_object, solutions):
         target_coords = target_object[2]
         target_poly = Polygon(target_coords)
@@ -1460,7 +1503,7 @@ class DFS_Solver_Floor:
         grid_points = self.create_grids(room_poly)
         objects = {"door": ((50, 50), 0, ((0, 0), (100, 0), (100, 100), (0, 100)), 1)}
         grid_points = self.remove_points(grid_points, objects)
-        # self.visualize_grid(room_poly, grid_points, objects)
+        self.visualize_grid(room_poly, grid_points, objects)
 
         object_dim = (200, 100)
         solutions = self.get_all_solutions(room_poly, grid_points, object_dim)
@@ -1692,5 +1735,37 @@ class DFS_Solver_Floor:
 
 if __name__ == "__main__":
     solver = DFS_Solver_Floor(max_duration=30, grid_size=50)
-    solver.test_dfs_placement()
-    solver.test_milp_placement(simple=False, use_milp=True)
+    room_vertices = ((0, 0), (0, 500), (500, 500), (500, 0))
+    room_poly = Polygon(room_vertices)
+    objects_list = [
+        ('bed-0', (208.41754283245845, 232.29113018173896)),
+        ('nightstand-0', (54.14719062632266, 55.546348551499314)),
+        ('nightstand-1', (54.14719062632266, 55.546348551499314)),
+        # ('wardrobe-0', (103.35603689751153, 73.40638239884669)),
+        # ('dresser-0', (157.66412086810877, 67.32846919391213)),
+        # ('floor_lamp-0', (32.659439789621466, 60.61655833308859)),
+        # ('bench-0', (178.33759895994098, 62.57441998168213))
+    ]
+    constraints = {
+        'bed-0': [{'type': 'global', 'constraint': 'edge'},],
+        'nightstand-0': [ {'type': 'anchor', 'constraint': 'anchor', 'target': np.array((250, 250))}, {'type': 'global', 'constraint': 'middle'}, {'type': 'distance', 'constraint': 'near', 'target': 'bed-0'}, {'type': 'relative', 'constraint': 'left of', 'target': 'bed-0'}, {'type': 'alignment', 'constraint': 'center aligned', 'target': 'bed-0'}, {'type': 'direction', 'constraint': 'face to', 'target': 'bed-0'}],
+        'nightstand-1': [{'type': 'global', 'constraint': 'edge'}, {'type': 'distance', 'constraint': 'near', 'target': 'bed-0'}, {'type': 'relative', 'constraint': 'right of', 'target': 'bed-0'}, {'type': 'alignment', 'constraint': 'center aligned', 'target': 'bed-0'}, {'type': 'direction', 'constraint': 'face to', 'target': 'bed-0'}],
+        # 'wardrobe-0': [{'type': 'global', 'constraint': 'edge'}, {'type': 'distance', 'constraint': 'far', 'target': 'bed-0'}],
+        # 'dresser-0': [{'type': 'global', 'constraint': 'edge'}, {'type': 'distance', 'constraint': 'far', 'target': 'wardrobe-0'}],
+        # 'floor_lamp-0': [{'type': 'global', 'constraint': 'edge'}, {'type': 'distance', 'constraint': 'near', 'target': 'bed-0'}, {'type': 'relative', 'constraint': 'side of', 'target': 'nightstand-0'}],
+        # 'bench-0': [{'type': 'global', 'constraint': 'edge'}, {'type': 'relative', 'constraint': 'in front of', 'target': 'bed-0'}, {'type': 'alignment', 'constraint': 'center aligned', 'target': 'bed-0'}, {'type': 'alignment', 'constraint': 'center aligned', 'target': 'bed-0'}, {'type': 'direction', 'constraint': 'face to', 'target': 'bed-0'}]
+    }
+    initial_state = {
+        'door-0': ((50.0, 408.6990451661397), 0, [(100.0, 462.7740597573568), (100.0, 354.6240305749227), (0.0, 354.6240305749227), (0.0, 462.7740597573568)], 1),
+        'door-1': ((450.0, 83.41349029850312), 0, [(500.0, 134.63575506519624), (500.0, 32.19122553181002), (400.0, 32.19122553181002), (400.0, 134.63575506519624)], 1)
+    }
+    solver.get_solution(
+        room_poly,
+        objects_list,
+        constraints,
+        initial_state,
+        use_milp=False,
+    )
+    
+    # solver.test_dfs_placement()
+    # solver.test_milp_placement(simple=False, use_milp=True)
