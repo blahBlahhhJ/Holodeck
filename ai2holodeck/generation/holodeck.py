@@ -6,8 +6,8 @@ from typing import Optional, Dict, Any, Tuple
 import compress_json
 from colorama import Fore
 import open_clip
-# from langchain.llms import OpenAI
-from langchain_together import Together
+from langchain.llms import OpenAI
+# from langchain_together import Together
 # from together import Together
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
@@ -71,16 +71,16 @@ class Holodeck:
             os.environ["OPENAI_ORG"] = openai_org
 
         # initialize llm
-        # self.llm = OpenAI(
-        #     model_name=LLM_MODEL_NAME,
-        #     max_tokens=2048,
-        #     openai_api_key=openai_api_key,
-        # )
-        self.llm = Together(
-            together_api_key="49e0872245a493332c84a36c73a023cb2a60346a7e3a492848b84781ef7a77aa",
-            model="meta-llama/Llama-3-70b-chat-hf",
+        self.llm = OpenAI(
+            model_name="gpt-4o-mini",
             max_tokens=2048,
+            openai_api_key=openai_api_key,
         )
+        # self.llm = Together(
+        #     together_api_key="49e0872245a493332c84a36c73a023cb2a60346a7e3a492848b84781ef7a77aa",
+        #     model="meta-llama/Meta-Llama-3-70B-Instruct-Lite",
+        #     max_tokens=4096,
+        # )
 
         # initialize CLIP
         (
