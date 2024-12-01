@@ -40,8 +40,12 @@ class FloorObjectGenerator:
         self.object_retriever = object_retriever
         self.database = object_retriever.database
         self.constraint_prompt = PromptTemplate(
-            input_variables=["room_type", "room_size", "objects"],
+            input_variables=["room_type", "room_size", "objects", "previous_constraints"],
             template=prompts.object_constraints_prompt,
+        )
+        self.constraint_prompt_2 = PromptTemplate(
+            input_variables=["object_constraints_prompt_1", "object_constraints_1"],
+            template=prompts.object_constraints_prompt_2,
         )
         self.baseline_prompt = PromptTemplate(
             input_variables=["room_type", "room_size", "objects"],
@@ -55,7 +59,7 @@ class FloorObjectGenerator:
         self.use_milp = False
         self.multiprocessing = False
 
-    def generate_objects(self, scene, use_constraint=True):
+    def generate_objects(self, scene, use_constraint=True, editing=False):
         rooms = scene["rooms"]
         doors = scene["doors"]
         windows = scene["windows"]
@@ -64,7 +68,7 @@ class FloorObjectGenerator:
         results = []
 
         packed_args = [
-            (room, doors, windows, open_walls, selected_objects, use_constraint)
+            (room, doors, windows, open_walls, selected_objects, use_constraint, editing)
             for room in rooms
         ]
         if self.multiprocessing:
@@ -83,7 +87,7 @@ class FloorObjectGenerator:
         return results
 
     def generate_objects_per_room(self, args):
-        room, doors, windows, open_walls, selected_objects, use_constraint = args
+        room, doors, windows, open_walls, selected_objects, use_constraint, editing = args
 
         selected_floor_objects = selected_objects[room["roomType"]]["floor"]
         object_name2id = {
@@ -100,11 +104,13 @@ class FloorObjectGenerator:
         object_names = list(object_name2id.keys())
 
         if use_constraint:
+            previous_constraints = room.get('actual_objects_raw_plan', 'N/A')
             # get constraints
             constraint_prompt = self.constraint_prompt.format(
                 room_type=room_type,
                 room_size=room_size,
                 objects=", ".join(object_names),
+                previous_constraints=previous_constraints,
             )
 
             if self.constraint_type == "llm":
@@ -117,7 +123,23 @@ class FloorObjectGenerator:
                 print("Error: constraint type not supported!")
 
             print(f"plan for {room_type}: {constraint_plan}")
+
+            actual_raw_plan = '\n'.join([plan.lower() for plan in constraint_plan.split("\n") if "|" in plan])
+            room['actual_objects_raw_plan'] = actual_raw_plan
             constraints = self.parse_constraints(constraint_plan, object_names)
+
+            if editing:
+                constraint_prompt_2 = self.constraint_prompt_2.format(
+                    object_constraints_prompt_1=constraint_prompt,
+                    object_constraints_1=constraint_plan
+                )
+                semi_fixed_objects_str = self.llm(constraint_prompt_2)
+                semi_fixed_objects = set(semi_fixed_objects_str.split(" | "))
+
+                for obj in constraints:
+                    if obj in semi_fixed_objects:
+                        pos = np.array([room['solution'][obj][0][0], room['solution'][obj][0][1]])
+                        constraints[obj].append({'type': 'anchor', 'constraint': 'anchor', 'target': pos})
 
             # get objects list
             object2dimension = {
@@ -154,6 +176,7 @@ class FloorObjectGenerator:
                 initial_state,
                 use_milp=self.use_milp,
             )
+            room['solution'] = solution
             placements = self.solution2placement(solution, object_name2id, room_id)
         else:
             object_information = ""
@@ -322,6 +345,7 @@ class FloorObjectGenerator:
             "edge alignment": "alignment",
             "near": "distance",
             "far": "distance",
+            "anchor": "anchor",
         }
 
         object2constraints = {}

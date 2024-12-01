@@ -188,6 +188,7 @@ class Holodeck:
         return scene
 
     def generate_walls(self, scene):
+        scene['wall_height'] = 3.5
         wall_height, walls = self.wall_generator.generate_walls(scene)
         scene["wall_height"] = wall_height
         scene["walls"] = walls
@@ -263,13 +264,41 @@ class Holodeck:
 
         return scene
 
-    def select_objects(self, scene, additional_requirements_object, used_assets=[]):
+    def select_objects(self, scene, additional_requirements_object, used_assets=[], use_milp=False, use_constraint=True):
         self.object_selector.used_assets = used_assets
-        object_selection_plan, selected_objects = self.object_selector.select_objects(
-            scene, additional_requirements_object
-        )
-        scene["object_selection_plan"] = object_selection_plan
-        scene["selected_objects"] = selected_objects
+
+        editing = False
+        while True:
+            object_selection_plan, selected_objects = self.object_selector.select_objects(
+                scene, additional_requirements_object
+            )
+            scene["object_selection_plan"] = object_selection_plan
+            scene["selected_objects"] = selected_objects
+
+            # generate floor objects
+            self.floor_object_generator.use_milp = use_milp
+            scene["floor_objects"] = self.floor_object_generator.generate_objects(
+                scene, use_constraint=use_constraint, editing=editing,
+            )
+
+            # generate wall objects
+            scene["wall_objects"] = self.wall_object_generator.generate_wall_objects(
+                scene, use_constraint=use_constraint
+            )
+
+            compress_json.dump(
+                scene,
+                os.path.join(self.save_dir, "tmp_objects.json"),
+                json_kwargs=dict(indent=4),
+            )
+
+            print(f"{Fore.GREEN}AI: Use {os.path.join(self.save_dir, 'tmp_objects.json')} to render the current design. If you are happy with the design, please type DONE. Otherwise, type in additional requirements to edit the current design.{Fore.RESET}")
+            additional_requirements_object = input("User: ")
+
+            if additional_requirements_object == "DONE":
+                break
+            editing = True
+
         return scene
 
     def generate_ceiling_objects(self, scene, additional_requirements_ceiling="N/A"):
@@ -367,17 +396,8 @@ class Holodeck:
             scene,
             additional_requirements_object=self.additional_requirements_object,
             used_assets=used_assets,
-        )
-
-        # generate floor objects
-        self.floor_object_generator.use_milp = use_milp
-        scene["floor_objects"] = self.floor_object_generator.generate_objects(
-            scene, use_constraint=use_constraint
-        )
-
-        # generate wall objects
-        scene["wall_objects"] = self.wall_object_generator.generate_wall_objects(
-            scene, use_constraint=use_constraint
+            use_milp=use_milp,
+            use_constraint=use_constraint,
         )
 
         # combine floor and wall objects

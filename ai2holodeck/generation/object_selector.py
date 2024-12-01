@@ -94,53 +94,36 @@ class ObjectSelector:
             room["roomType"]: {"floor": [], "wall": []} for room in scene["rooms"]
         }
 
-        if "object_selection_plan" in scene:
-            object_selection_plan = scene["object_selection_plan"]
-            if self.reuse_selection:
-                selected_objects = scene["selected_objects"]
-            else:
-                for room_type in rooms_types:
-                    floor_objects, _, wall_objects, _ = self.get_objects_by_room(
-                        object_selection_plan[room_type],
-                        scene,
-                        room2size[room_type],
-                        room2floor_capacity[room_type],
-                        room2wall_capacity[room_type],
-                        room2vertices[room_type],
-                    )
-                    selected_objects[room_type]["floor"] = floor_objects
-                    selected_objects[room_type]["wall"] = wall_objects
-        else:
-            object_selection_plan = {room["roomType"]: [] for room in scene["rooms"]}
-            packed_args = [
-                (
-                    room_type,
-                    scene,
-                    additional_requirements,
-                    room2size,
-                    room2floor_capacity,
-                    room2wall_capacity,
-                    room2vertices,
-                )
-                for room_type in rooms_types
-            ]
+        object_selection_plan = {room["roomType"]: [] for room in scene["rooms"]}
+        packed_args = [
+            (
+                room_type,
+                scene,
+                additional_requirements,
+                room2size,
+                room2floor_capacity,
+                room2wall_capacity,
+                room2vertices,
+            )
+            for room_type in rooms_types
+        ]
 
-            # if self.multiprocessing:
-            #     pool = multiprocessing.Pool(processes=4)
-            #     results = pool.map(self.plan_room, packed_args)
-            #     pool.close()
-            #     pool.join()
-            # else:
-            # results = [self.plan_room(args) for args in packed_args]
-            results = []
-            from tqdm import tqdm
-            for args in tqdm(packed_args):
-                results.append(self.plan_room(args))
+        # if self.multiprocessing:
+        #     pool = multiprocessing.Pool(processes=4)
+        #     results = pool.map(self.plan_room, packed_args)
+        #     pool.close()
+        #     pool.join()
+        # else:
+        # results = [self.plan_room(args) for args in packed_args]
+        results = []
+        from tqdm import tqdm
+        for args in tqdm(packed_args):
+            results.append(self.plan_room(args))
 
-            for room_type, result in results:
-                selected_objects[room_type]["floor"] = result["floor"]
-                selected_objects[room_type]["wall"] = result["wall"]
-                object_selection_plan[room_type] = result["plan"]
+        for room_type, result in results:
+            selected_objects[room_type]["floor"] = result["floor"]
+            selected_objects[room_type]["wall"] = result["wall"]
+            object_selection_plan[room_type] = result["plan"]
 
         print(
             f"\n{Fore.GREEN}AI: Here is the object selection plan:\n{object_selection_plan}{Fore.RESET}"
@@ -148,6 +131,7 @@ class ObjectSelector:
         return object_selection_plan, selected_objects
 
     def plan_room(self, args):
+        previous_selections = scene.get("object_selection_plan", "N/A")
         (
             room_type,
             scene,
@@ -166,6 +150,7 @@ class ObjectSelector:
             self.object_selection_template_1.replace("INPUT", scene["query"])
             .replace("ROOM_TYPE", room_type)
             .replace("ROOM_SIZE", room_size_str)
+            .replace("PREVIOUS_SELECTIONS", previous_selections)
             .replace("REQUIREMENTS", additional_requirements)
         )
 
