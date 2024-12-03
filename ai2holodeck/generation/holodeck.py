@@ -282,9 +282,10 @@ class Holodeck:
             )
 
             # generate wall objects
-            scene["wall_objects"] = self.wall_object_generator.generate_wall_objects(
-                scene, use_constraint=use_constraint
-            )
+            if not editing:
+                scene["wall_objects"] = self.wall_object_generator.generate_wall_objects(
+                    scene, use_constraint=use_constraint
+                )
 
             # combine floor and wall objects
             scene["objects"] = scene["floor_objects"] + scene["wall_objects"]

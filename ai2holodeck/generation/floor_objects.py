@@ -146,6 +146,10 @@ class FloorObjectGenerator:
                         pos = np.array([room['solution'][obj][0][0], room['solution'][obj][0][1]])
                         constraints[obj].append({'type': 'anchor', 'constraint': 'anchor', 'target': pos})
 
+                for obj in list(constraints.keys()):
+                    if obj not in object_names:
+                        constraints.pop(obj)
+
             print(f"constraints for {room_type}: {constraints}")
             
             # get objects list

@@ -125,7 +125,7 @@ Now I want you to design {room_type} and the room size is {room_size}.
 Here are the objects that I want to place in the {room_type}:
 {objects}
 
-Previous constraints:
+Here are the existing constraints. If there are any new objects, please add new constraints for them.
 {previous_constraints}
 
 Please first use natural language to explain your high-level design strategy, and then follow the desired format *strictly* (do not add any additional text at the beginning or end) to provide the constraints for each object."""
