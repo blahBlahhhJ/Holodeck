@@ -307,7 +307,13 @@ Here are some guidelines for you:
 2. Do not provide rug/mat, windows, doors, curtains, and ceiling objects which have been installed for each room.
 3. I want more types of large objects and more types of small objects on top of the large objects to make the room look more vivid.
 
-Please first use natural language to explain your high-level design strategy for *ROOM_TYPE*, and then follow the desired JSON format *strictly* (do not add any additional text at the beginning or end)."""
+Please first use natural language to explain your high-level design strategy for *ROOM_TYPE*, and then follow the desired JSON format *strictly* (do not add any additional text at the beginning or end).
+
+We may provide you with previous selections and additional requirements. If these are available, your task is to make adjustments to the previous selections based on the additional requirements. Specifically:
+1. If there are no objects in the previous selections related to the additional requirements, you should simply return the previous selections as they are.
+2. If there are objects in the previous selections related to the additional requirements, you should modify only those objects while keeping all others strictly unchanged.
+Again, you should first explain your reasoning for modifying or not modifying the selections in natural language. Afterward, follow the desired JSON format strictly, without including any additional text at the beginning or end.
+"""
 
 
 object_selection_prompt_new_2 = """User: {object_selection_prompt_new_1}

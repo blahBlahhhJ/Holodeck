@@ -286,6 +286,9 @@ class Holodeck:
                 scene, use_constraint=use_constraint
             )
 
+            # combine floor and wall objects
+            scene["objects"] = scene["floor_objects"] + scene["wall_objects"]
+
             compress_json.dump(
                 scene,
                 os.path.join(self.save_dir, "tmp_objects.json"),
@@ -399,9 +402,6 @@ class Holodeck:
             use_milp=use_milp,
             use_constraint=use_constraint,
         )
-
-        # combine floor and wall objects
-        scene["objects"] = scene["floor_objects"] + scene["wall_objects"]
 
         # generate small objects
         scene = self.generate_small_objects(scene, used_assets=used_assets)

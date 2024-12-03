@@ -105,12 +105,16 @@ class FloorObjectGenerator:
 
         if use_constraint:
             previous_constraints = room.get('actual_objects_raw_plan', 'N/A')
+            
+            # if previous_constraints != 'N/A': # FIXME: 
+            #     import pdb; pdb.set_trace()
+                
             # get constraints
             constraint_prompt = self.constraint_prompt.format(
                 room_type=room_type,
                 room_size=room_size,
                 objects=", ".join(object_names),
-                previous_constraints=previous_constraints,
+                previous_constraints='N/A', # DISABLED: previous_constraints
             )
 
             if self.constraint_type == "llm":
@@ -134,13 +138,16 @@ class FloorObjectGenerator:
                     object_constraints_1=constraint_plan
                 )
                 semi_fixed_objects_str = self.llm(constraint_prompt_2)
+                print(f"semi fixed objects for {room_type}: {semi_fixed_objects_str}")
                 semi_fixed_objects = set(semi_fixed_objects_str.split(" | "))
 
-                for obj in constraints:
-                    if obj in semi_fixed_objects:
+                for obj in semi_fixed_objects:
+                    if obj in room['solution'] and obj in constraints:
                         pos = np.array([room['solution'][obj][0][0], room['solution'][obj][0][1]])
                         constraints[obj].append({'type': 'anchor', 'constraint': 'anchor', 'target': pos})
 
+            print(f"constraints for {room_type}: {constraints}")
+            
             # get objects list
             object2dimension = {
                 object_name: get_bbox_dims(self.database[object_id])

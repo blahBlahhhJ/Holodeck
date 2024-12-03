@@ -131,7 +131,6 @@ class ObjectSelector:
         return object_selection_plan, selected_objects
 
     def plan_room(self, args):
-        previous_selections = scene.get("object_selection_plan", "N/A")
         (
             room_type,
             scene,
@@ -141,6 +140,7 @@ class ObjectSelector:
             room2wall_capacity,
             room2vertices,
         ) = args
+        previous_selections = scene.get("object_selection_plan", "N/A")
         print(f"\n{Fore.GREEN}AI: Selecting objects for {room_type}...{Fore.RESET}\n")
 
         result = {}
@@ -150,7 +150,7 @@ class ObjectSelector:
             self.object_selection_template_1.replace("INPUT", scene["query"])
             .replace("ROOM_TYPE", room_type)
             .replace("ROOM_SIZE", room_size_str)
-            .replace("PREVIOUS_SELECTIONS", previous_selections)
+            .replace("PREVIOUS_SELECTIONS", json.dumps(previous_selections[room_type]) if previous_selections != "N/A" else "N/A")
             .replace("REQUIREMENTS", additional_requirements)
         )
 
@@ -176,7 +176,7 @@ class ObjectSelector:
         )
 
         required_floor_capacity_percentage = 0.8
-        if floor_capacity[1] / floor_capacity[0] >= required_floor_capacity_percentage:
+        if floor_capacity[1] / floor_capacity[0] >= required_floor_capacity_percentage or previous_selections != "N/A":
             result["floor"] = floor_objects
             result["wall"] = wall_objects
             result["plan"] = plan_1
@@ -217,6 +217,26 @@ class ObjectSelector:
             result["floor"] = floor_objects
             result["wall"] = wall_objects
             result["plan"] = new_plan
+            
+        # if previous_selections != "N/A": # FIXME:
+        #     import pdb; pdb.set_trace()
+        
+        if previous_selections != "N/A":
+            previous_objects = {}
+            for k, v in scene['selected_objects'][room_type]['floor']:
+                previous_objects[k] = v
+            current_objects = {}
+            for k, v in result['floor']:
+                current_objects[k] = v
+                
+            new_floor_objects = []
+            
+            for obj in current_objects:
+                assetid = previous_objects.get(obj, current_objects[obj])
+                new_floor_objects.append((obj, assetid))
+            result['floor'] = new_floor_objects
+            result['wall'] = scene['selected_objects'][room_type]['wall']
+            
 
         return room_type, result
 
