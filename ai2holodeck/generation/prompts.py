@@ -311,7 +311,8 @@ Please first use natural language to explain your high-level design strategy for
 
 We may provide you with previous selections and additional requirements. If these are available, your task is to make adjustments to the previous selections based on the additional requirements. Specifically:
 1. If there are no objects in the previous selections related to the additional requirements, you should simply return the previous selections as they are.
-2. If there are objects in the previous selections related to the additional requirements, you should modify only those objects while keeping all others strictly unchanged.
+2. If there are objects in the previous selections related to the additional requirements, you should modify only those objects while keeping all others *strictly* unchanged.
+For example, when asked to replace a sofa with a new one, you should only modify the sofa object, while keeping all other objects unchanged, and you should not add any new objects except for the new sofa.
 Again, you should first explain your reasoning for modifying or not modifying the selections in natural language. Afterward, follow the desired JSON format strictly, without including any additional text at the beginning or end.
 """
 
